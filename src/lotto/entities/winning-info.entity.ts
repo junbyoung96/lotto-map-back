@@ -24,4 +24,7 @@ export class WinningInfo {
     @ManyToOne(() => LottoStore, store => store.winningInfo)
     @JoinColumn({ name: 'store_id' })
     store: LottoStore;
+    
+    @Column({ nullable: false })
+    store_id: number;
 }

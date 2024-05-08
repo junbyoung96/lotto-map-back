@@ -9,5 +9,6 @@ import { WinningInfo } from './entities/winning-info.entity';
   imports: [TypeOrmModule.forFeature([LottoStore, WinningInfo])],
   controllers: [LottoController],
   providers: [LottoService],
+  exports: [LottoService]
 })
 export class LottoModule { }

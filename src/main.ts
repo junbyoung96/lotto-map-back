@@ -1,9 +1,22 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import * as fs from 'fs';
+import * as path from 'path';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
   
+  let appOptions = {};
+  
+  if(process.env.NODE_ENV === "production"){
+    const httpsOptions = {
+      key: fs.readFileSync(path.join(__dirname, '..', 'ssl', 'private.key')),
+      cert: fs.readFileSync(path.join(__dirname, '..', 'ssl', 'certificate.crt'))
+    };
+    appOptions = { httpsOptions };
+  }
+  
+  const app = await NestFactory.create(AppModule, appOptions);
+
   app.enableCors({
     origin: '*',  // 허용할 오리진
     methods: 'GET,POST',           // 허용할 HTTP 메소드

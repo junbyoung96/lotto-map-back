@@ -1,12 +1,16 @@
 import { Module } from '@nestjs/common';
 import { LottoModule } from './lotto/lotto.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { SchedulerModule } from './scheduler/scheduler.module';
 import * as dotenv from 'dotenv';
-
-dotenv.config();
+import { ConfigModule } from '@nestjs/config';
+import * as path from 'path';
 
 @Module({
   imports: [LottoModule,
+    SchedulerModule, ConfigModule.forRoot({
+      envFilePath: (process.env.NODE_ENV === 'production') ? path.join(__dirname, '..', 'config', 'product.env') : path.join(__dirname, '..', 'config', 'local.env')
+    }),
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: process.env.DB_HOST,
@@ -16,7 +20,7 @@ dotenv.config();
       database: process.env.DB_NAME,
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
       synchronize: false,
-    })
-  ]
+    }),
+  ],
 })
 export class AppModule { }
