@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import * as fs from 'fs';
 import * as path from 'path';
+import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   
@@ -23,6 +24,8 @@ async function bootstrap() {
     allowedHeaders: 'Content-Type,Authorization', // 허용할 헤더
     credentials: true,             // 쿠키를 포함한 요청 허용 여부
   });
+  
+  app.useGlobalPipes(new ValidationPipe()); //모든요청에 유효성검사
   await app.listen(3001);
 }
 bootstrap();

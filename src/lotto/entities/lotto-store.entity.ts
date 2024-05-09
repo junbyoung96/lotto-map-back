@@ -21,12 +21,6 @@ export class LottoStore {
     @Column({ type: 'numeric', precision: 10, scale: 6, nullable: true })
     lon: number;
 
-    @Column({ type: 'timestamp with time zone', default: () => 'CURRENT_TIMESTAMP', nullable: true })
-    created_at: Date;
-
-    @Column({ type: 'timestamp with time zone', default: () => 'CURRENT_TIMESTAMP', nullable: true })
-    updated_at: Date;
-
     @Column({ type: 'int', default: 0, nullable: true })
     first_prize: number;
 

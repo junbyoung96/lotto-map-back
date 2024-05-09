@@ -15,12 +15,6 @@ export class WinningInfo {
     @Column({ type: 'varchar', length: 10, nullable: true })
     category: string;
 
-    @Column({ type: 'timestamp with time zone', default: () => 'CURRENT_TIMESTAMP', nullable: true })
-    created_at: Date;
-
-    @Column({ type: 'timestamp with time zone', default: () => 'CURRENT_TIMESTAMP', nullable: true })
-    updated_at: Date;
-    
     @ManyToOne(() => LottoStore, store => store.winningInfo)
     @JoinColumn({ name: 'store_id' })
     store: LottoStore;
