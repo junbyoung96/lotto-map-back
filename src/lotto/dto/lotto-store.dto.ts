@@ -14,7 +14,6 @@ export class RequestDto {
 export class PagingDTO {
     searchType: string;
     searchWord: string;
-    searchBy: string;
     @IsInt()
     @Min(1)
     page: number;

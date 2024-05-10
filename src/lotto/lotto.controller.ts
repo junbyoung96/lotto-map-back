@@ -1,6 +1,6 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post } from '@nestjs/common';
 import { LottoService } from './lotto.service';
-import { RequestDto } from './dto/request.dto';
+import { PagingDTO, RequestDto } from './dto/lotto-store.dto';
 
 @Controller('lotto-stores')
 export class LottoController {
@@ -10,6 +10,12 @@ export class LottoController {
   @HttpCode(HttpStatus.OK)
   findStoresNearLocation(@Body() requestDto: RequestDto) {
     return this.lottoService.getNearbyStores(requestDto);
+  }
+
+  @Post('/list')
+  @HttpCode(HttpStatus.OK)
+  findStores(@Body() pagingDTO: PagingDTO) {
+    return this.lottoService.getStoreList(pagingDTO);
   }
 
   @Get()

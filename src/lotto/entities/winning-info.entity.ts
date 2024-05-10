@@ -4,7 +4,7 @@ import { LottoStore } from './lotto-store.entity';
 @Entity({ name: 'winning_info' })
 export class WinningInfo {
     @PrimaryGeneratedColumn()
-    win_id: number;
+    id: number;
 
     @Column({ type: 'int', default: 0, nullable: true })
     draw_no: number;
