@@ -2,14 +2,15 @@ import { Injectable, Logger } from '@nestjs/common';
 import axios from "axios";
 import * as cheerio from "cheerio";
 import * as iconv from "iconv-lite";
+import { LottoStore } from 'src/lotto/entities/lotto-store.entity';
 
 export interface Store {
     id: number,
     name: string,
-    tel: string,
+    phone: string,
     address: string,
-    latitude: number,
-    longitude: number
+    lat: number,
+    lon: number
 }
 
 export interface WinningInfo {
@@ -23,46 +24,46 @@ export interface WinningInfo {
 export class WebCrawlerService {
     private readonly logger = new Logger(WebCrawlerService.name);
 
-    async getStoresByLocation(location: string): Promise<Store[]> {
-        try {
-            const encodedLocation = encodeURIComponent(location);
-            const baseUrl = `https://dhlottery.co.kr/store.do?method=sellerInfo645Result&searchType=1&sltSIDO=${encodedLocation}&rtlrSttus=001`;
-            const initialUrl = `${baseUrl}&nowPage=1`;
-            const response = await axios.get(initialUrl, { responseType: 'arraybuffer', responseEncoding: 'binary' });
-            const data = iconv.decode(response.data, 'EUC-KR');
-            const jsonData = JSON.parse(data);
-            const stores: Store[] = [];
+    async getNewStores() {
+        const locations = ["서울", "경기", "부산", "대구", "인천", "대전", "울산", "강원", "충북", "충남", "광주", "전북", "전남", "경북", "경남", "제주", "세종"];
+        const stores: Store[] = [];
+        for (const location of locations) {
+            try {
+                const encodedLocation = encodeURIComponent(location);
+                const baseUrl = `https://dhlottery.co.kr/store.do?method=sellerInfo645Result&searchType=1&nowPage=1&sltSIDO=${encodedLocation}&sltGUGUN=&rtlrSttus=001`;
+                const response = await axios.get(baseUrl, { responseType: 'arraybuffer', responseEncoding: 'binary' });
+                const data = iconv.decode(response.data, 'EUC-KR');
+                const jsonData = JSON.parse(data);
 
-            for (let i = 1; i <= jsonData.totalPage; i++) {
-                const pageUrl = `${baseUrl}&nowPage=${i}`;
-                const pageResponse = await axios.get(pageUrl, { responseType: 'arraybuffer', responseEncoding: 'binary' });
-                let storeData = iconv.decode(pageResponse.data, 'EUC-KR');
-                storeData = storeData.replace(/&&#35;40;/g, '(').replace(/&&#35;41;/g, ')');
-                const jsonStoreData = JSON.parse(storeData);
-                jsonStoreData.arr.forEach(store => {
-                    const a: Store = {
-                        id: store.RTLRID,
-                        name: store.FIRMNM,
-                        tel: store.RTLRSTRTELNO,
-                        address: store.BPLCDORODTLADRES,
-                        latitude: store.LATITUDE,
-                        longitude: store.LONGITUDE,
+
+                for (let i = 1; i <= jsonData.totalPage; i++) {
+                    const pageUrl = `https://dhlottery.co.kr/store.do?method=sellerInfo645Result&searchType=1&nowPage=${i}&sltSIDO=${encodedLocation}&sltGUGUN=&rtlrSttus=001`;
+                    const pageResponse = await axios.get(pageUrl, { responseType: 'arraybuffer', responseEncoding: 'binary' });
+                    let storeData = iconv.decode(pageResponse.data, 'EUC-KR');
+                    storeData = storeData.replace(/&&#35;40;/g, '(').replace(/&&#35;41;/g, ')');
+                    const jsonStoreData = JSON.parse(storeData);
+                    for (let store of jsonStoreData.arr) {
+                        const newStore: Store = {
+                            id: Number(store.RTLRID),
+                            name: store.FIRMNM,
+                            phone: store.RTLRSTRTELNO,
+                            address: store.BPLCDORODTLADRES,
+                            lat: store.LATITUDE,
+                            lon: store.LONGITUDE,
+                        }
+                        stores.push(newStore);
                     }
-                    stores.push(a);
-                });
+                }
+            } catch (error) {
+                this.logger.error('Error retrieving stores by location', error);
+                return [];
             }
-            return stores;
-        } catch (error) {
-            this.logger.error('Error retrieving stores by location', error);
-            return [];
         }
+        return stores;
     }
 
     async getWinningInfo(drwNo: number) {
         try {
-            let regex: RegExp;
-            let match: RegExpExecArray | null;
-
             const response = await axios({
                 method: 'post',
                 url: `https://dhlottery.co.kr/store.do?method=topStore&pageGubun=L645&nowPage=1&drwNo=${drwNo}&schKey=all`,
@@ -72,8 +73,8 @@ export class WebCrawlerService {
             const html = iconv.decode(response.data, 'EUC-KR');
             const $ = cheerio.load(html);
             const aTagCount = $("#page_box").children().length;
-                                          
-            if(aTagCount === 0){
+
+            if (aTagCount === 0) {
                 return [];
             }
             let totalPage = aTagCount > 10 ? parseInt($("#page_box .end").attr("onclick").match(/\d+/)[0]) : aTagCount;
@@ -126,4 +127,38 @@ export class WebCrawlerService {
             return [];
         }
     }
+}
+// 배열을 객체 맵으로 변환하는 함수
+export function arrayToMap(arr: Store[] | LottoStore[]): { [key: number]: Store | LottoStore } {
+    const map: { [key: number]: Store | LottoStore } = {};
+    for (const e of arr) {
+        map[e.id] = e;
+    }
+    return map;
+}
+
+// 개점 및 폐점한 판매점을 찾는 함수
+export function findStoreChanges(oldStores: LottoStore[], newStores: Store[]) {
+    const oldStoreMap = arrayToMap(oldStores);
+    const newStoreMap = arrayToMap(newStores);
+
+
+    const newOpenedStores: Store[] = [];
+    const closedStores: number[] = [];
+
+    // 개점한 판매점 찾기
+    for (const newStore of newStores) {
+        if (!oldStoreMap[newStore.id]) {
+            newOpenedStores.push(newStore);
+        }
+    }
+
+    // 폐점한 판매점 찾기
+    for (const oldStore of oldStores) {
+        if (!newStoreMap[oldStore.id]) {
+            closedStores.push(oldStore.id);
+        }
+    }
+
+    return { newOpenedStores, closedStores };
 }

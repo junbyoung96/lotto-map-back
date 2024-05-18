@@ -1,10 +1,9 @@
 import { Module } from '@nestjs/common';
-import { LottoModule } from './lotto/lotto.module';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { SchedulerModule } from './scheduler/scheduler.module';
-import * as dotenv from 'dotenv';
 import { ConfigModule } from '@nestjs/config';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import * as path from 'path';
+import { LottoModule } from './lotto/lotto.module';
+import { SchedulerModule } from './scheduler/scheduler.module';
 
 @Module({
   imports: [LottoModule,
