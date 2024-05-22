@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository , EntityManager } from 'typeorm';
+import { Repository, EntityManager } from 'typeorm';
 import { LottoStore } from './entities/lotto-store.entity';
 import { WinningInfo } from './entities/winning-info.entity';
 import { WinningInfo as IWinningInfo, Store } from '../scheduler/web-crawler.service';
@@ -19,14 +19,24 @@ export class LottoService {
   ) { }
 
   //특정좌표의 주변 판매점정보 가져오기
-  getNearbyStores({ northEastLat, northEastLon, southWestLat, southWestLon }: RequestDto) {
-    return this.lottoStoreRankingRepository
+  async getNearbyStores({ northEastLat, northEastLon, southWestLat, southWestLon }: RequestDto) {        
+    const stores = await this.lottoStoreRankingRepository
       .createQueryBuilder('store')
       .where('store.lat BETWEEN :southWestLat AND :northEastLat', { southWestLat, northEastLat })
       .andWhere('store.lon BETWEEN :southWestLon AND :northEastLon', { southWestLon, northEastLon })
       .orderBy('store.score', 'DESC')
       .limit(30)
       .getMany();
+
+    for (const store of stores) {
+      store.winningInfo = await this.winningInfoRepository
+        .createQueryBuilder('wi')
+        .where('wi.store_id = :id', { id: store.id })
+        .orderBy({ 'wi.draw_no': 'DESC' })
+        .limit(30)
+        .getMany();
+    }
+    return stores;
   }
 
   async getStoreList({ page, showCount, searchType, searchWord }: PagingDTO) {
@@ -64,6 +74,7 @@ export class LottoService {
       .createQueryBuilder('wi')
       .select()
       .where('wi.store_id = :id', { id })
+      .orderBy({ 'wi.draw_no': 'DESC' })
       .getMany();
 
     return store;
@@ -91,7 +102,7 @@ export class LottoService {
       .execute();
   }
   //판매점 저장하기
-  async saveStores(stores: Store[]) {        
+  async saveStores(stores: Store[]) {
     await this.lottoRepository
       .createQueryBuilder()
       .insert()
@@ -106,10 +117,10 @@ export class LottoService {
       .delete()
       .from(LottoStore)
       .where("id IN (:...storeIds)", { storeIds })
-      .execute();    
+      .execute();
   }
   // 물리화된 뷰 갱신하기
   async refreshMaterializedView() {
     await this.entityManager.query('REFRESH MATERIALIZED VIEW lotto_store_ranking');
-  }
+  }  
 }
