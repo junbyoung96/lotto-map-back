@@ -7,7 +7,7 @@ export class ScheduleService {
     private readonly logger = new Logger(ScheduleService.name);
     constructor(private readonly lottoService: LottoService, private readonly webCrawlerService: WebCrawlerService) { }
 
-    //@Cron('0 2 * * 0')   //매주 일요일 02시 00분 에 실행되는 스케줄러
+    @Cron('0 2 * * 0')   //매주 일요일 02시 00분 에 실행되는 스케줄러
     async schedule() {
         await this.updateStoreInfo();
         await this.saveWinningInfo();

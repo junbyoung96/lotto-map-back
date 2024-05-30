@@ -8,13 +8,13 @@ async function bootstrap() {
   
   let appOptions = {};
   
-  if(process.env.NODE_ENV === "production"){
-    const httpsOptions = {
-      key: fs.readFileSync(path.join(__dirname, '..', 'ssl', 'private.key')),
-      cert: fs.readFileSync(path.join(__dirname, '..', 'ssl', 'certificate.crt'))
-    };
-    appOptions = { httpsOptions };
-  }
+  // if(process.env.NODE_ENV === "production"){
+  //   const httpsOptions = {
+  //     key: fs.readFileSync(path.join(__dirname, '..', 'ssl', 'private.key')),
+  //     cert: fs.readFileSync(path.join(__dirname, '..', 'ssl', 'certificate.crt'))
+  //   };
+  //   appOptions = { httpsOptions };
+  // }
   
   const app = await NestFactory.create(AppModule, appOptions);
 

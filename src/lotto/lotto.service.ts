@@ -33,7 +33,7 @@ export class LottoService {
         .createQueryBuilder('wi')
         .where('wi.store_id = :id', { id: store.id })
         .orderBy({ 'wi.draw_no': 'DESC' })
-        .limit(30)
+        .limit(1)
         .getMany();
     }
     return stores;
