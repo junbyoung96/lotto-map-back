@@ -1,73 +1,152 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
-</p>
+# Lotto Map Backend
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+## 개요
+Lotto Map Backend는 **명당 로또 판매점 위치 정보**를 제공하는 서비스의 백엔드 서버입니다.  
+당첨 이력을 기준으로 판매점 순위를 매겨 제공합니다.  
+이 프로젝트는 사용자 주변의 명당 판매점을 쉽게 찾을 수 있도록 도와주는것을 목적으로 합니다.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## 기술 스택
+- **프레임워크:** NestJS
+- **언어:** TypeScript
+- **데이터베이스:** postgresql
+- **ORM:** TypeORM
+- **라이브러리:** ![axios](https://img.shields.io/badge/axios-5A29E4?style=flat&logo=axios&logoColor=white) ![cheerio](https://img.shields.io/badge/cheerio-E88C1F?style=flat&logo=cheerio&logoColor=white) ![icov-lite](https://img.shields.io/badge/icovlite-00B8FC?style=flat&logo=icov_lite&logoColor=white)
 
-## Description
+## API 명세
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+### 공통 응답 형식
+모든 API는 JSON 형식의 응답을 반환합니다.
 
-## Installation
+### 엔드포인트
 
-```bash
-$ npm install
+#### 1. 전체 로또 판매점 정보 조회
+- **URL:** `/lotto-stores`
+- **Method:** `GET`
+- **Response:**
+  ```json
+  {    
+    "data": [
+      {
+        "id": 1,
+        "name": "판매점명",
+        "address": "판매점 주소",
+        "phone" : "전화번호",
+        "lat": "위도",
+        "lon": "경도"        
+      },
+      ...
+    ]
+  }
+#### 2. 특정 판매점 상세 정보 조회
+- **URL:** `/lotto-stores/:id`
+- **Method:** `GET`
+- **Response:**
+```json
+  {    
+    "data": {
+        "id": 1,
+        "name": "판매점명",
+        "address": "판매점 주소",
+        "phone" : "전화번호",
+        "lat": "위도",
+        "lon": "경도" ,
+        "winningInfo" : [
+          {
+            "id" : "당첨정보 ID",
+            "store_id" : 1,
+            "draw_no" : "회차번호",
+            "rank" : "당첨 등수",
+            "category" : "당첨 분류(자동,수동)"          
+          },
+          
+        ]        
+      }
+  }
 ```
 
-## Running the app
-
-```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+#### 3. 사용자 주변 판매점 조회
+- **URL:** `/api/stores`
+- **Method:** `POST`
+- **Request Body:** `사용자 주변 2km 반경의 위도,경도를 받습니다.`
+```json
+  {
+    "northEastLat": "북동쪽 위도",
+    "northEastLon": "북동쪽 경도",    
+    "southWestLat": "남서쪽 위도",    
+    "southWestLon": "남서쪽 경도"
+  }
 ```
 
-## Test
-
-```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+- **Response:**
+  - **통계점수 기준으로 내림차순 정렬하여 응답합니다.**
+```json
+  {    
+    "data": [
+      {
+        "id": 1,
+        "name": "판매점명",
+        "address": "판매점 주소",
+        "phone" : "전화번호",
+        "lat": "위도",
+        "lon": "경도" ,
+        "winningInfo" : [
+          {
+            "id" : "당첨정보 ID",
+            "store_id" : 1,
+            "draw_no" : "회차번호",
+            "rank" : "당첨 등수",
+            "category" : "당첨 분류(자동,수동)"          
+          },
+          ...
+        ]    
+      },
+      ...
+    ]
+  }
 ```
+## Schedule
+* 변경 혹은 폐업한 판매점정보를 갱신합니다.
+* `Axios`를 이용해, 동행복권 사이트에 접속해 당첨정보를 추출하여 저장합니다.
+* `lotto_store_ranking` View를 갱신합니다.
+* 매주 일요일 02시에 실행됩니다.
 
-## Support
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
 
-## Stay in touch
+## Table
 
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+#### lotto_stores
+| 컬럼명 | 데이터타입 | 설명 |
+|-------|-------|-------|
+| id | integer | 판매점 ID (Primary Key) |
+| name | varchar | 판매점 이름 |
+| address | varchar | 판매점 주소 |
+| phone | varchar | 판매점 전화번호 |
+| lat | decimal | 판매점 위도 |
+| lon | decimal | 판매점 경도 |
 
-## License
+#### winning_infos
+| 컬럼명 | 데이터타입 | 설명 |
+|-------|-------|-------|
+| id | integer | 당첨 정보 ID (Primary Key) |
+| store_id | integer | 판매점 ID (Foreign Key - lotto_stores.id) |
+| draw_no | integer | 회차번호 |
+| rank | integer | 당첨 등수 |
+| category | varchar | 당첨 분류 (자동,수동) |
 
-Nest is [MIT licensed](LICENSE).
+## View
+
+#### lotto_store_ranking
+| 컬럼명 | 데이터타입 | 설명 |
+|-------|-------|-------|
+| id | integer | 판매점 ID (Primary Key) |
+| name | varchar | 판매점 이름 |
+| address | varchar | 판매점 주소 |
+| phone | varchar | 판매점 전화번호 |
+| lat | decimal | 판매점 위도 |
+| frist_prize | integer | 1등 당첨횟수 |
+| second_prize | integer | 2등 당첨횟수 |
+| score | integer | 통계 점수 |
+
+
+>판매점당 통계 점수를 미리 계산해 두어, 조회 시 더 빠르게 처리할 수 있도록 설계하였습니다.  
+>스케줄이 실행되어 당첨 정보가 추가될 때, 갱신되도록 설정하였습니다.
